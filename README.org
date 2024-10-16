@@ -1,0 +1,26 @@
+#+title: Readme
+
+For now this project is just in it's infancy perdiod
+The plan for this application is to try out isometric projection to create a "map builder"
+I'd like to be able to lay out tiles with a given height and floor (how high this x high element is placed)
+I'd also like to be able to recognize which tile is being hovered by mouse and remove them
+I'd like to be able to filter view based on "floor"
+
+* Features
+** Isometric tiling
+By clicking add/remove/edit tiles that are at the coordinate of the mouse
+** 2d camera movement
+By using WSAD / arrows move around the map
+** Zooming in/out
+Using scroll / +/- zoom the view in and out
+** Floor filtering
+Being able to choose at which height we are currently editing
+Also an option to not show tile below/above
+
+* Possible extension features
+** Import / export of the maps
+Saving informating regarding the map in external file
+** Randomly generate map
+Generate location using perlin noise based methods
+** Some textures and biomes
+Could be cool to have different biomes and things that go on top of tiles and then randomly generate some locations in a manner simillar to minecraft
