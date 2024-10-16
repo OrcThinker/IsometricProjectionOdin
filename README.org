@@ -2,9 +2,9 @@
 
 For now this project is just in it's infancy perdiod
 The plan for this application is to try out isometric projection to create a "map builder"
-I'd like to be able to lay out tiles with a given height and floor (how high this x high element is placed)
-I'd also like to be able to recognize which tile is being hovered by mouse and remove them
-I'd like to be able to filter view based on "floor"
+Built to understand isometric projection together with it's z sorting and see how it is actually may work in a game
+Another reason is that this could be a good way to see how to make a tooling for map creating if I ever decide to create a game in isometric style (I had some thought regarding doing it)
+Hopefully I'll have a tutorial attached to this particular application so that anyone can understand it and write their own isometric projection system for themselves in whatever language they choose
 
 * Features
 ** Isometric tiling
