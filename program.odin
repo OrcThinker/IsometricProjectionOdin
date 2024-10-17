@@ -26,25 +26,17 @@ initGameLoop :: proc() {
     for !rl.WindowShouldClose(){
         rl.BeginDrawing()
         rl.ClearBackground({255,190,0,255})
-        //Game Loop
-        // tile1 := projectToIso(2,2,0)
-        // tile2 := projectToIso(3,2,0)
         isoMPos := projectToIso(int(rl.GetMouseX()), int(rl.GetMouseY()), 0)
         for x in 17..=27 {
             for y in 2..=12 {
-                for z in 0..=0 {
+                for z in 0..=3 {
                     tilePos := projectToIso(x,y,z)
-                    // highlighted: bool = tilePos.x < int(rl.GetMouseX()) && tilePos.x + tileSize.x > int(rl.GetMouseX()) &&
-                    //                     tilePos.y < int(rl.GetMouseY()) && tilePos.y + tileSize.y > int(rl.GetMouseY())
-
-                    mouseIsoPos := projectFromIso(f32(int(rl.GetMouseX()) - tileSize.x/2), f32(rl.GetMouseY()), 0)
-                    fmt.println(mouseIsoPos)
+                    mouseIsoPos := projectFromIso(f32(int(rl.GetMouseX()) - tileSize.x/2), f32(rl.GetMouseY()), z)
                     highlighted: bool = mouseIsoPos.x == x && mouseIsoPos.y == y
                     renderTile(tilePos, tileTexture, highlighted)
                 }
             }
         }
-        // renderTile(tile2, tileTexture)
         rl.EndDrawing()
     }
 }
@@ -56,8 +48,6 @@ renderTile :: proc(pos:v2, tileTexture:rl.Texture, highlighted:bool) {
 }
 
 projectToIso :: proc(isoX,isoY,isoZ: int) -> v2 {
-    // sprite.x = (sprite.isoX - sprite.isoY) * _halfTileWidth;
-    // sprite.y = (sprite.isoX + sprite.isoY - sprite.isoZ) * _halfTileHeight;
     a := (isoX - isoY) * tileSize.x/2
     //isoX := a / tilesize.x * 2 + isoY
     //isoY := b * 2 / tilesize.y + isoZ - isoX
