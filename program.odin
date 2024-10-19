@@ -13,6 +13,10 @@ v3 :: struct {
     x,y,z: int
 }
 
+v4 :: struct {
+    x,y,z,w: int
+}
+
 tileSize:v2 = {64,32}
 levelHeight := 16
 windowSize:v2 = {1024,860}
@@ -40,6 +44,8 @@ initGameLoop :: proc() {
         highlightV3: v3
         iterationMin:v3 = {17, 2, 0}
         iterationMax:v3  = {27, 12, 3}
+        // iterationMin:v3 = {17, 2, 0}
+        // iterationMax:v3  = {17, 2, 0}
 
         //Pre render logic
         for x in iterationMin.x..= iterationMax.x {
@@ -65,10 +71,23 @@ initGameLoop :: proc() {
                     shouldHighlight := x == highlightV3.x && y == highlightV3.y && z == highlightV3.z
                     if !slice.contains(deletedTiles[:], v3({x,y,z})){
                         renderTileOnMouseOver(x,y,z, tileTexture, shouldHighlight)
+                        checkRect({x,y,z})
                     }
                 }
             }
         }
+
+        for x in iterationMin.x..= iterationMax.x {
+            for y in iterationMin.y..= iterationMax.y {
+                for z in iterationMin.z..= iterationMax.z {
+                    if isHighlighted(x,y,z, true)
+                    {
+                        // checkRect({x,y,z})
+                    }
+                }
+            }
+        }
+        // checkRect(highlightV3)
 
         rl.EndDrawing()
     }
@@ -83,9 +102,33 @@ renderTileOnMouseOver :: proc(x,y,z:int, tileTexture:rl.Texture, shouldRenderHig
 isHighlighted :: proc(x,y,z: int, considerLevelHeight: bool) -> bool {
     mouseIsoPos := projectFromIso(f32(int(rl.GetMouseX()) - tileSize.x/2), f32(rl.GetMouseY()), z)
     mouseIsoPosLower := projectFromIso(f32(int(rl.GetMouseX()) - tileSize.x/2), f32(rl.GetMouseY()), z - 1)
-    highlighted: bool = mouseIsoPos.x == x && mouseIsoPos.y == y ||
-                        (considerLevelHeight && mouseIsoPosLower.x == x && mouseIsoPosLower.y == y)
+
+    startTileRenderPoint := projectToIso(x,y,z)
+    startTileRenderPoint.y = startTileRenderPoint.y + tileSize.y/2
+    // fmt.println(rl.GetMouseX())
+    // fmt.println("/////")
+    // fmt.println(startTileRenderPoint.y)
+    // fmt.println(rl.GetMouseY())
+    // fmt.println("/////")
+
+    highlighted: bool =
+         (mouseIsoPos.x == x && mouseIsoPos.y == y) ||
+        (mouseIsoPosLower.x == x && mouseIsoPosLower.y == y) ||
+        (isInRect({int(rl.GetMouseX()), int(rl.GetMouseY())}, startTileRenderPoint.x, startTileRenderPoint.y, tileSize.x, tileSize.y/2))
     return highlighted
+}
+
+checkRect :: proc(pos:v3){
+    startTileRenderPoint := projectToIso(pos.x,pos.y, pos.z)
+    startTileRenderPoint.y = startTileRenderPoint.y + tileSize.y/2
+    // fmt.println(pos)
+    // rl.DrawRectangleLines(i32(startTileRenderPoint.x),i32(startTileRenderPoint.y),i32(tileSize.x),i32(tileSize.y/2), {0,0,0,255})
+}
+
+timer:= 0
+isInRect :: proc(point:v2, a,b,width,height:int) -> bool {
+    return point.x > a && point.x < a+width &&
+        point.y > b && point.y < b + height
 }
 
 
