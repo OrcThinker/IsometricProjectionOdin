@@ -2,6 +2,7 @@ package main
 
 import "core:fmt"
 import "core:math"
+import "core:slice"
 import rl "vendor:raylib"
 
 v2 :: struct {
@@ -28,6 +29,9 @@ initGameLoop :: proc() {
 
     defer rl.CloseWindow()
     tileTexture: rl.Texture2D = rl.LoadTexture("./shortTile.png")
+    deletedTiles:[dynamic]v3
+    defer delete(deletedTiles)
+
     for !rl.WindowShouldClose(){
         rl.BeginDrawing()
         rl.ClearBackground({255,190,0,255})
@@ -43,7 +47,9 @@ initGameLoop :: proc() {
                 for z in iterationMin.z..= iterationMax.z {
                     if isHighlighted(x,y,z, true)
                     {
-                        highlightV3 = {x,y,z}
+                        if !slice.contains(deletedTiles[:], v3({x,y,z})){
+                            highlightV3 = {x,y,z}
+                        }
                     }
                 }
             }
@@ -53,8 +59,13 @@ initGameLoop :: proc() {
         for x in iterationMin.x..= iterationMax.x {
             for y in iterationMin.y..= iterationMax.y {
                 for z in iterationMin.z..= iterationMax.z {
+                    if rl.IsMouseButtonPressed(rl.MouseButton.LEFT){
+                        append(&deletedTiles, highlightV3)
+                    }
                     shouldHighlight := x == highlightV3.x && y == highlightV3.y && z == highlightV3.z
-                    renderTileOnMouseOver(x,y,z, tileTexture, shouldHighlight)
+                    if !slice.contains(deletedTiles[:], v3({x,y,z})){
+                        renderTileOnMouseOver(x,y,z, tileTexture, shouldHighlight)
+                    }
                 }
             }
         }
