@@ -1,6 +1,7 @@
 package main
 
 import "core:fmt"
+import "core:math"
 import rl "vendor:raylib"
 
 v2 :: struct {
@@ -27,19 +28,43 @@ initGameLoop :: proc() {
         rl.BeginDrawing()
         rl.ClearBackground({255,190,0,255})
         isoMPos := projectToIso(int(rl.GetMouseX()), int(rl.GetMouseY()), 0)
+        hightlightX,hightlightY,hightlightZ:int
         for x in 17..=27 {
             for y in 2..=12 {
                 for z in 0..=3 {
-                    tilePos := projectToIso(x,y,z)
-                    mouseIsoPos := projectFromIso(f32(int(rl.GetMouseX()) - tileSize.x/2), f32(rl.GetMouseY()), z)
-                    highlighted: bool = mouseIsoPos.x == x && mouseIsoPos.y == y
-                    renderTile(tilePos, tileTexture, highlighted)
+                    if renderTileOnMouseOver(x,y,z, tileTexture, true)
+                    {
+                        hightlightX = x
+                        hightlightY = y
+                        hightlightZ = z
+                    }
+                }
+            }
+        }
+        for x in 17..=27 {
+            for y in 2..=12 {
+                for z in 0..=3 {
+                    shouldHighlight := x == hightlightX && y == hightlightY && z == hightlightZ
+                    renderTileOnMouseOver(x,y,z, tileTexture, true, shouldHighlight)
                 }
             }
         }
         rl.EndDrawing()
     }
 }
+
+//Could use AABB checking but for now I am simply checking both upper and lower lever for height comparison
+renderTileOnMouseOver :: proc(x,y,z:int, tileTexture:rl.Texture, considerLevelHeight:bool = false, shouldRenderHighlighted:bool = false) -> bool {
+    tilePos := projectToIso(x,y,z)
+    mouseIsoPos := projectFromIso(f32(int(rl.GetMouseX()) - tileSize.x/2), f32(rl.GetMouseY()), z)
+    mouseIsoPosLower := projectFromIso(f32(int(rl.GetMouseX()) - tileSize.x/2), f32(rl.GetMouseY()), z - 1)
+    highlighted: bool = mouseIsoPos.x == x && mouseIsoPos.y == y ||
+                        (considerLevelHeight && mouseIsoPosLower.x == x && mouseIsoPosLower.y == y)
+    // renderTile(tilePos, tileTexture, highlighted)
+    renderTile(tilePos, tileTexture, shouldRenderHighlighted)
+    return highlighted
+}
+
 
 renderTile :: proc(pos:v2, tileTexture:rl.Texture, highlighted:bool) {
     imageRectangle:rl.Rectangle = {0,0, f32(tileSize.x), f32(tileSize.y + levelHeight)}
