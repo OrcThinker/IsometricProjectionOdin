@@ -29,9 +29,13 @@ initGameLoop :: proc() {
         rl.ClearBackground({255,190,0,255})
         isoMPos := projectToIso(int(rl.GetMouseX()), int(rl.GetMouseY()), 0)
         hightlightX,hightlightY,hightlightZ:int
-        for x in 17..=27 {
-            for y in 2..=12 {
-                for z in 0..=3 {
+        xIterationMin,yIterationMin,zIterationMin:int = 17, 2, 0
+        xIterationMax,yIterationMax,zIterationMax:int = 27, 12, 3
+
+        //Pre render logic
+        for x in xIterationMin..=xIterationMax {
+            for y in yIterationMin..=yIterationMax {
+                for z in zIterationMin..=zIterationMax {
                     if isHighlighted(x,y,z, true)
                     {
                         hightlightX = x
@@ -41,9 +45,11 @@ initGameLoop :: proc() {
                 }
             }
         }
-        for x in 17..=27 {
-            for y in 2..=12 {
-                for z in 0..=3 {
+
+        //Render logioc
+        for x in xIterationMin..=xIterationMax {
+            for y in yIterationMin..=yIterationMax {
+                for z in zIterationMin..=zIterationMax {
                     shouldHighlight := x == hightlightX && y == hightlightY && z == hightlightZ
                     renderTileOnMouseOver(x,y,z, tileTexture, shouldHighlight)
                 }
