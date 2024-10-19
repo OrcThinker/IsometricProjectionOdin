@@ -8,6 +8,10 @@ v2 :: struct {
     x,y: int,
 }
 
+v3 :: struct {
+    x,y,z: int
+}
+
 tileSize:v2 = {64,32}
 levelHeight := 16
 windowSize:v2 = {1024,860}
@@ -27,34 +31,34 @@ initGameLoop :: proc() {
     for !rl.WindowShouldClose(){
         rl.BeginDrawing()
         rl.ClearBackground({255,190,0,255})
+
         isoMPos := projectToIso(int(rl.GetMouseX()), int(rl.GetMouseY()), 0)
-        hightlightX,hightlightY,hightlightZ:int
-        xIterationMin,yIterationMin,zIterationMin:int = 17, 2, 0
-        xIterationMax,yIterationMax,zIterationMax:int = 27, 12, 3
+        highlightV3: v3
+        iterationMin:v3 = {17, 2, 0}
+        iterationMax:v3  = {27, 12, 3}
 
         //Pre render logic
-        for x in xIterationMin..=xIterationMax {
-            for y in yIterationMin..=yIterationMax {
-                for z in zIterationMin..=zIterationMax {
+        for x in iterationMin.x..= iterationMax.x {
+            for y in iterationMin.y..= iterationMax.y {
+                for z in iterationMin.z..= iterationMax.z {
                     if isHighlighted(x,y,z, true)
                     {
-                        hightlightX = x
-                        hightlightY = y
-                        hightlightZ = z
+                        highlightV3 = {x,y,z}
                     }
                 }
             }
         }
 
-        //Render logioc
-        for x in xIterationMin..=xIterationMax {
-            for y in yIterationMin..=yIterationMax {
-                for z in zIterationMin..=zIterationMax {
-                    shouldHighlight := x == hightlightX && y == hightlightY && z == hightlightZ
+        //Render logic
+        for x in iterationMin.x..= iterationMax.x {
+            for y in iterationMin.y..= iterationMax.y {
+                for z in iterationMin.z..= iterationMax.z {
+                    shouldHighlight := x == highlightV3.x && y == highlightV3.y && z == highlightV3.z
                     renderTileOnMouseOver(x,y,z, tileTexture, shouldHighlight)
                 }
             }
         }
+
         rl.EndDrawing()
     }
 }
