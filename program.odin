@@ -32,7 +32,7 @@ initGameLoop :: proc() {
         for x in 17..=27 {
             for y in 2..=12 {
                 for z in 0..=3 {
-                    if renderTileOnMouseOver(x,y,z, tileTexture, true)
+                    if isHighlighted(x,y,z, true)
                     {
                         hightlightX = x
                         hightlightY = y
@@ -45,7 +45,7 @@ initGameLoop :: proc() {
             for y in 2..=12 {
                 for z in 0..=3 {
                     shouldHighlight := x == hightlightX && y == hightlightY && z == hightlightZ
-                    renderTileOnMouseOver(x,y,z, tileTexture, true, shouldHighlight)
+                    renderTileOnMouseOver(x,y,z, tileTexture, shouldHighlight)
                 }
             }
         }
@@ -53,15 +53,17 @@ initGameLoop :: proc() {
     }
 }
 
-//Could use AABB checking but for now I am simply checking both upper and lower lever for height comparison
-renderTileOnMouseOver :: proc(x,y,z:int, tileTexture:rl.Texture, considerLevelHeight:bool = false, shouldRenderHighlighted:bool = false) -> bool {
+renderTileOnMouseOver :: proc(x,y,z:int, tileTexture:rl.Texture, shouldRenderHighlighted:bool = false) {
     tilePos := projectToIso(x,y,z)
+    renderTile(tilePos, tileTexture, shouldRenderHighlighted)
+}
+
+//Could use AABB checking but for now I am simply checking both upper and lower lever for height comparison
+isHighlighted :: proc(x,y,z: int, considerLevelHeight: bool) -> bool {
     mouseIsoPos := projectFromIso(f32(int(rl.GetMouseX()) - tileSize.x/2), f32(rl.GetMouseY()), z)
     mouseIsoPosLower := projectFromIso(f32(int(rl.GetMouseX()) - tileSize.x/2), f32(rl.GetMouseY()), z - 1)
     highlighted: bool = mouseIsoPos.x == x && mouseIsoPos.y == y ||
                         (considerLevelHeight && mouseIsoPosLower.x == x && mouseIsoPosLower.y == y)
-    // renderTile(tilePos, tileTexture, highlighted)
-    renderTile(tilePos, tileTexture, shouldRenderHighlighted)
     return highlighted
 }
 
