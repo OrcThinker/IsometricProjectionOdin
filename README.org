@@ -9,6 +9,7 @@ Hopefully I'll have a tutorial attached to this particular application so that a
 * Features
 ** Isometric tiling
 By clicking add/remove/edit tiles that are at the coordinate of the mouse
+[[./shortTile.png]]
 ** Floor filtering
 Being able to choose at which height we are currently editing
 Also an option to not show tile below/above
@@ -26,7 +27,3 @@ This would require creating additional textures, so kinda don't feel like it
 By using WSAD / arrows move around the map
 ** Zooming in/out
 Using scroll / +/- zoom the view in and out
-
-#+CAPTION: Capt
-#+NAME: TestImage
-[[./shortTile.png]]
