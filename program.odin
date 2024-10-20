@@ -1,3 +1,10 @@
+//TODO
+//Make separate wireframe image and make tile without frame
+//Make different tiles and save tile type
+//Levels system:
+//You can +/- level you focus on in level mode and turn it on/off
+//if level == 1 then you don't see any tile above (maybe transparent)
+
 package main
 
 import "core:fmt"
@@ -46,7 +53,7 @@ initGameLoop :: proc() {
     rl.SetTargetFPS(targetFps)
 
     defer rl.CloseWindow()
-    tileTexture: rl.Texture2D = rl.LoadTexture("./shortTile.png")
+    tileTexture: rl.Texture2D = rl.LoadTexture("./shortTiles.png")
     eMode := editMode.CREATE
 
 
@@ -81,7 +88,7 @@ initGameLoop :: proc() {
 
         tileSide: side
         for tile in tilesToRender {
-            renderTileOnMouseOver(tile.x,tile.y,tile.z, tileTexture, false)
+            // renderTileOnMouseOver(tile.x,tile.y,tile.z, tileTexture, false)
             isHigh, tempTileSide := isHighlighted(tile.x,tile.y,tile.z, true)
             if  isHigh {
                 highlightV3 = {tile.x,tile.y,tile.z}
@@ -222,9 +229,11 @@ isInRect :: proc(point:v2, a,b,width,height:int) -> bool {
         point.y > b && point.y < b + height
 }
 
-renderTile :: proc(pos:v2, tileTexture:rl.Texture, highlighted:bool) {
-    imageRectangle:rl.Rectangle = {0,0, f32(tileSize.x), f32(tileSize.y + levelHeight)}
+renderTile :: proc(pos:v2, tileTexture:rl.Texture, highlighted:bool, nrOfTile: int = 1) {
+    tilePngPlacement:v2 = {tileSize.x * nrOfTile, (tileSize.y + levelHeight) * nrOfTile}
+    imageRectangle:rl.Rectangle = {f32(tilePngPlacement.x),f32(tilePngPlacement.y), f32(tileSize.x), f32(tileSize.y + levelHeight)}
     color:rl.Color = highlighted ? rl.SKYBLUE : rl.WHITE
+    // color:rl.Color = highlighted ? rl.SKYBLUE : {255,255,255,20}
     rl.DrawTextureRec(tileTexture, imageRectangle, {f32(pos.x), f32(pos.y)}, color)
 }
 
