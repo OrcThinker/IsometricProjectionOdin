@@ -1,9 +1,8 @@
 //TODO
-//Make separate wireframe image and make tile without frame
-//Make different tiles and save tile type
-//Levels system:
-//You can +/- level you focus on in level mode and turn it on/off
-//if level == 1 then you don't see any tile above (maybe transparent)
+//There is no logic that checks of there is a tile above the one i have selected
+//Maybe it will be better to have the render level actually disable creating on top
+//You would either create on top of those below or by LEFT/RIGHT to the ones on the render level
+//Render level -> if top = replace | right and left the same
 
 package main
 
@@ -48,8 +47,9 @@ targetFps:i32= 60
 throttle:i32= 6
 nullV3:v3 = {-100,-100,-100}
 
+useRenderLevel := false
+
 main :: proc() {
-    fmt.println("tesing empty app")
     initGameLoop()
 }
 
@@ -73,12 +73,10 @@ initGameLoop :: proc() {
     // alot of tiles
     // iterationMin:v3 = {0, 0, 0}
     // iterationMax:v3  = {40, 40, 1}
-
-    useRenderLevel := false
+    //
     renderLevel := iterationMin.z
 
     tilesToRender:[dynamic]tileInfo = prepareTiles(iterationMin,iterationMax)
-    fmt.println(len(tilesToRender))
 
     editSelectV3: v3
     for !rl.WindowShouldClose(){
@@ -136,20 +134,15 @@ initGameLoop :: proc() {
         }
 
         //Done post render so that it won't mess with render
-        tileToAdd:v3 = nullV3
+        tileToAdd:tileInfo = {nullV3, 1}
         for tile,index in tilesToRender {
             if rl.IsMouseButtonPressed(rl.MouseButton.LEFT) && tile.pos == highlightV3{
                 switch eMode {
                 case editMode.SELECT:
-                    fmt.println("select lmb")
                     editSelectV3 = tile.pos
                 case editMode.CREATE:
-                    fmt.println("create lmb")
-                    tileToAdd = highlightV3
-                    // createTile(tilesToRender, tile, tileSide)
-                    // append(&tilesToRender, tile)
+                    tileToAdd.pos = highlightV3
                 case editMode.DELETE:
-                    fmt.println(index)
                     ordered_remove(&tilesToRender, index)
                 }
                 if eMode == editMode.DELETE {
@@ -157,7 +150,7 @@ initGameLoop :: proc() {
             }
         }
 
-        if tileToAdd != nullV3 {
+        if tileToAdd.pos != nullV3 {
             // append(&tilesToRender, tileToAdd)
             createTile(&tilesToRender, tileToAdd, tileSide, tileType)
         }
@@ -205,23 +198,38 @@ initGameLoop :: proc() {
     }
 }
 
-createTile :: proc (tiles:^[dynamic]tileInfo, placement:v3, tileSide:side, type: int = 1) {
+createTile :: proc (tiles:^[dynamic]tileInfo, ti:tileInfo, tileSide:side, type: int = 2) {
     //For now I treat 0,0,0 as null value
-    if(placement == nullV3){
+    if(ti.pos == nullV3){
         return
     }
-    newTilePlacement :tileInfo= {placement,type}
-    switch tileSide{
-    case side.TOP:
-        newTilePlacement.pos.z += 1
+    newTilePlacement :tileInfo= {ti.pos,type}
+    #partial switch tileSide{
     case side.LEFT:
         newTilePlacement.pos.y += 1
     case side.RIGHT:
         newTilePlacement.pos.x += 1
     }
 
-    append(tiles, newTilePlacement)
-    slice.sort_by(tiles[:], orderByZ)
+    if useRenderLevel && tileSide == side.TOP
+    {
+        //Could pass pointer and do a replace instead of find -> replace
+        for tile, index in tiles^ {
+            if(tile == ti){
+                fmt.println(tile)
+                tiles^[index] = newTilePlacement
+                break;
+            }
+        }
+    }
+    else
+    {
+        if tileSide == side.TOP{
+            newTilePlacement.pos.z += 1
+        }
+        append(tiles, newTilePlacement)
+        slice.sort_by(tiles[:], orderByZ)
+    }
 }
 
 orderByZ :: proc (a,b:tileInfo) -> bool {
