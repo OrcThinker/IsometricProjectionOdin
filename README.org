@@ -9,18 +9,20 @@ Hopefully I'll have a tutorial attached to this particular application so that a
 * Features
 ** Isometric tiling
 By clicking add/remove/edit tiles that are at the coordinate of the mouse
+** Floor filtering
+Being able to choose at which height we are currently editing
+Also an option to not show tile below/above
+** Import / export of the maps
+Saving informating regarding the map in external file
+
+* Possible extension features
+** Randomly generate map
+Generate location using perlin noise based methods
+Getting to use perlin noise may be actually pretty cool
+** Some textures and biomes
+Could be cool to have different biomes and things that go on top of tiles and then randomly generate some locations in a manner simillar to minecraft
+This would require creating additional textures, so kinda don't feel like it
 ** 2d camera movement
 By using WSAD / arrows move around the map
 ** Zooming in/out
 Using scroll / +/- zoom the view in and out
-** Floor filtering
-Being able to choose at which height we are currently editing
-Also an option to not show tile below/above
-
-* Possible extension features
-** Import / export of the maps
-Saving informating regarding the map in external file
-** Randomly generate map
-Generate location using perlin noise based methods
-** Some textures and biomes
-Could be cool to have different biomes and things that go on top of tiles and then randomly generate some locations in a manner simillar to minecraft

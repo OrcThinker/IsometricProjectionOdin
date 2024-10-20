@@ -1,8 +1,5 @@
 //TODO
-//There is no logic that checks of there is a tile above the one i have selected
-//Maybe it will be better to have the render level actually disable creating on top
-//You would either create on top of those below or by LEFT/RIGHT to the ones on the render level
-//Render level -> if top = replace | right and left the same
+//I kinda want to add import and export feature
 
 package main
 
