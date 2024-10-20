@@ -23,11 +23,18 @@ side :: enum {
     RIGHT
 }
 
+editMode :: enum {
+    SELECT,
+    CREATE,
+    DELETE
+}
+
 tileSize:v2 = {64,32}
 levelHeight := 16
 windowSize:v2 = {1024,860}
 targetFps:i32= 60
 throttle:i32= 6
+nullV3:v3 = {-100,-100,-100}
 
 main :: proc() {
     fmt.println("tesing empty app")
@@ -40,8 +47,8 @@ initGameLoop :: proc() {
 
     defer rl.CloseWindow()
     tileTexture: rl.Texture2D = rl.LoadTexture("./shortTile.png")
-    deletedTiles:[dynamic]v3
-    defer delete(deletedTiles)
+    eMode := editMode.CREATE
+
 
     ticks:i32= 0
 
@@ -56,21 +63,20 @@ initGameLoop :: proc() {
     tilesToRender:[dynamic]v3 = prepareTiles(iterationMin,iterationMax)
     fmt.println(len(tilesToRender))
 
-
+    editSelectV3: v3
     for !rl.WindowShouldClose(){
         rl.BeginDrawing()
         rl.ClearBackground({255,190,0,255})
 
-
         ticks = ticks + 1
         if ticks < targetFps/throttle
         {
-            ticks = 0
-            //Here logic that is not bound to render
+            //Here we can throw throttle function that is not bound to render
+            //to speed the app up
         }
 
         isoMPos := projectToIso(int(rl.GetMouseX()), int(rl.GetMouseY()), 0)
-        highlightV3: v3
+        highlightV3: v3 = nullV3
 
 
         tileSide: side
@@ -84,30 +90,94 @@ initGameLoop :: proc() {
         }
 
         //Check which side we hover over
-        //Simple logic for current detection
-        //TOP = top tile, LEFT = left side of rest, RIGHT = right side of rest
-        hpText:cstring = fmt.ctprintf("Tile side: %v", tileSide)
-        defer rl.DrawText(hpText, 20,20, 32, {0,0,0,255})
+        tileText:cstring = fmt.ctprintf("Tile side: %v", tileSide)
+        defer rl.DrawText(tileText, 20,20, 16, {0,0,0,255})
+
+        modeText:cstring = fmt.ctprintf("Mode: %v", eMode)
+        defer rl.DrawText(modeText, 20,40, 16, {0,0,0,255})
+
+        selectTileText:cstring = fmt.ctprintf("Selected: %v", editSelectV3)
+        defer rl.DrawText(selectTileText, 20,60, 16, {0,0,0,255})
+
+        hoveredTileText:cstring = fmt.ctprintf("Hovered: %v", highlightV3)
+        defer rl.DrawText(hoveredTileText, 20,80, 16, {0,0,0,255})
+
+        tileAmountText:cstring = fmt.ctprintf("tiles: %v", len(tilesToRender))
+        defer rl.DrawText(tileAmountText, 20,100, 16, {0,0,0,255})
 
         for tile,index in tilesToRender {
             renderTileOnMouseOver(tile.x,tile.y,tile.z, tileTexture, tile == highlightV3)
         }
 
         //Done post render so that it won't mess with render
+        tileToAdd:v3 = nullV3
         for tile,index in tilesToRender {
             if rl.IsMouseButtonPressed(rl.MouseButton.LEFT) && tile == highlightV3{
-                fmt.println(index)
-                ordered_remove(&tilesToRender, index)
+                switch eMode {
+                case editMode.SELECT:
+                    fmt.println("select lmb")
+                    editSelectV3 = tile
+                case editMode.CREATE:
+                    fmt.println("create lmb")
+                    tileToAdd = highlightV3
+                    // createTile(tilesToRender, tile, tileSide)
+                    // append(&tilesToRender, tile)
+                case editMode.DELETE:
+                    fmt.println(index)
+                    ordered_remove(&tilesToRender, index)
+                }
+                if eMode == editMode.DELETE {
+                }
             }
+        }
+
+        if tileToAdd != nullV3 {
+            // append(&tilesToRender, tileToAdd)
+            createTile(&tilesToRender, tileToAdd, tileSide)
         }
 
         if rl.IsKeyPressed(rl.KeyboardKey.R) {
             delete(tilesToRender)
             tilesToRender = prepareTiles(iterationMin,iterationMax)
         }
+        if rl.IsKeyPressed(rl.KeyboardKey.Q) {
+            eMode = editMode.SELECT
+        }
+        if rl.IsKeyPressed(rl.KeyboardKey.W) {
+            eMode = editMode.CREATE
+        }
+        if rl.IsKeyPressed(rl.KeyboardKey.E) {
+            eMode = editMode.DELETE
+        }
 
         rl.EndDrawing()
     }
+}
+
+createTile :: proc (tiles:^[dynamic]v3, placement:v3, tileSide:side) {
+    //For now I treat 0,0,0 as null value
+    if(placement == nullV3){
+        return
+    }
+    newTilePlacement := placement
+    switch tileSide{
+    case side.TOP:
+        newTilePlacement.z += 1
+    case side.LEFT:
+        newTilePlacement.y += 1
+    case side.RIGHT:
+        newTilePlacement.x += 1
+    }
+
+    append(tiles, newTilePlacement)
+    slice.sort_by(tiles[:], orderByZ)
+}
+
+orderByZ :: proc (a,b:v3) -> bool {
+    if a.z != b.z {
+        return a.z < b.z
+    }
+    return a.x + a.y < b.x + b.y
 }
 
 prepareTiles :: proc (iterationMin,iterationMax:v3) -> [dynamic]v3 {
@@ -128,7 +198,6 @@ renderTileOnMouseOver :: proc(x,y,z:int, tileTexture:rl.Texture, shouldRenderHig
     renderTile(tilePos, tileTexture, shouldRenderHighlighted)
 }
 
-//Could use AABB checking but for now I am simply checking both upper and lower lever for height comparison
 isHighlighted :: proc(x,y,z: int, considerLevelHeight: bool) -> (bool, side)  {
     mouseIsoPos := projectFromIso(f32(int(rl.GetMouseX()) - tileSize.x/2), f32(rl.GetMouseY()), z)
     mouseIsoPosLower := projectFromIso(f32(int(rl.GetMouseX()) - tileSize.x/2), f32(rl.GetMouseY()), z - 1)
@@ -152,7 +221,6 @@ isInRect :: proc(point:v2, a,b,width,height:int) -> bool {
     return point.x > a && point.x < a+width &&
         point.y > b && point.y < b + height
 }
-
 
 renderTile :: proc(pos:v2, tileTexture:rl.Texture, highlighted:bool) {
     imageRectangle:rl.Rectangle = {0,0, f32(tileSize.x), f32(tileSize.y + levelHeight)}
