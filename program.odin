@@ -17,6 +17,12 @@ v4 :: struct {
     x,y,z,w: int
 }
 
+side :: enum {
+    TOP,
+    LEFT,
+    RIGHT
+}
+
 tileSize:v2 = {64,32}
 levelHeight := 16
 windowSize:v2 = {1024,860}
@@ -55,6 +61,7 @@ initGameLoop :: proc() {
         rl.BeginDrawing()
         rl.ClearBackground({255,190,0,255})
 
+
         ticks = ticks + 1
         if ticks < targetFps/throttle
         {
@@ -65,12 +72,22 @@ initGameLoop :: proc() {
         isoMPos := projectToIso(int(rl.GetMouseX()), int(rl.GetMouseY()), 0)
         highlightV3: v3
 
+
+        tileSide: side
         for tile in tilesToRender {
             renderTileOnMouseOver(tile.x,tile.y,tile.z, tileTexture, false)
-            if isHighlighted(tile.x,tile.y,tile.z, true) {
+            isHigh, tempTileSide := isHighlighted(tile.x,tile.y,tile.z, true)
+            if  isHigh {
                 highlightV3 = {tile.x,tile.y,tile.z}
+                tileSide = tempTileSide
             }
         }
+
+        //Check which side we hover over
+        //Simple logic for current detection
+        //TOP = top tile, LEFT = left side of rest, RIGHT = right side of rest
+        hpText:cstring = fmt.ctprintf("Tile side: %v", tileSide)
+        defer rl.DrawText(hpText, 20,20, 32, {0,0,0,255})
 
         for tile,index in tilesToRender {
             renderTileOnMouseOver(tile.x,tile.y,tile.z, tileTexture, tile == highlightV3)
@@ -112,17 +129,23 @@ renderTileOnMouseOver :: proc(x,y,z:int, tileTexture:rl.Texture, shouldRenderHig
 }
 
 //Could use AABB checking but for now I am simply checking both upper and lower lever for height comparison
-isHighlighted :: proc(x,y,z: int, considerLevelHeight: bool) -> bool {
+isHighlighted :: proc(x,y,z: int, considerLevelHeight: bool) -> (bool, side)  {
     mouseIsoPos := projectFromIso(f32(int(rl.GetMouseX()) - tileSize.x/2), f32(rl.GetMouseY()), z)
     mouseIsoPosLower := projectFromIso(f32(int(rl.GetMouseX()) - tileSize.x/2), f32(rl.GetMouseY()), z - 1)
 
     startTileRenderPoint := projectToIso(x,y,z)
     startTileRenderPoint.y = startTileRenderPoint.y + tileSize.y/2
 
-    highlighted: bool = (mouseIsoPos.x == x && mouseIsoPos.y == y) ||
-        (mouseIsoPosLower.x == x && mouseIsoPosLower.y == y) ||
-        (isInRect({int(rl.GetMouseX()), int(rl.GetMouseY())}, startTileRenderPoint.x, startTileRenderPoint.y, tileSize.x, tileSize.y/2))
-    return highlighted
+    top := (mouseIsoPos.x == x && mouseIsoPos.y == y)
+    rest := (mouseIsoPosLower.x == x && mouseIsoPosLower.y == y) ||
+            (isInRect({int(rl.GetMouseX()), int(rl.GetMouseY())}, startTileRenderPoint.x, startTileRenderPoint.y, tileSize.x, tileSize.y/2))
+    highlighted: bool =  top || rest
+    sideToReturn := side.TOP
+    if !top && rest {
+        isLeft: bool = int(rl.GetMouseX()) - startTileRenderPoint.x < tileSize.x/2
+        sideToReturn = isLeft? side.LEFT : side.RIGHT
+    }
+    return highlighted,sideToReturn
 }
 
 isInRect :: proc(point:v2, a,b,width,height:int) -> bool {
