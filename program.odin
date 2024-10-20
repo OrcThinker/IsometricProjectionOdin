@@ -21,6 +21,7 @@ tileSize:v2 = {64,32}
 levelHeight := 16
 windowSize:v2 = {1024,860}
 targetFps:i32= 60
+throttle:i32= 6
 
 main :: proc() {
     fmt.println("tesing empty app")
@@ -36,54 +37,73 @@ initGameLoop :: proc() {
     deletedTiles:[dynamic]v3
     defer delete(deletedTiles)
 
+    ticks:i32= 0
+
+    iterationMin:v3 = {17, 2, 0}
+    iterationMax:v3  = {27, 12, 3}
+    // 1 column
+    // iterationMin:v3 = {17, 2, 0}
+    // iterationMax:v3  = {17, 2, 0}
+    // alot of tiles
+    // iterationMin:v3 = {0, 0, 0}
+    // iterationMax:v3  = {40, 40, 1}
+    tilesToRender:[dynamic]v3 = prepareTiles(iterationMin,iterationMax)
+    fmt.println(len(tilesToRender))
+
+
     for !rl.WindowShouldClose(){
         rl.BeginDrawing()
         rl.ClearBackground({255,190,0,255})
 
+        ticks = ticks + 1
+        if ticks < targetFps/throttle
+        {
+            ticks = 0
+            //Here logic that is not bound to render
+        }
+
         isoMPos := projectToIso(int(rl.GetMouseX()), int(rl.GetMouseY()), 0)
         highlightV3: v3
-        iterationMin:v3 = {17, 2, 0}
-        iterationMax:v3  = {27, 12, 3}
-        // iterationMin:v3 = {17, 2, 0}
-        // iterationMax:v3  = {17, 2, 0}
 
-        //Pre render logic
-        for x in iterationMin.x..= iterationMax.x {
-            for y in iterationMin.y..= iterationMax.y {
-                for z in iterationMin.z..= iterationMax.z {
-                    if isHighlighted(x,y,z, true)
-                    {
-                        if !slice.contains(deletedTiles[:], v3({x,y,z})){
-                            highlightV3 = {x,y,z}
-                        }
-                    }
-                }
+        for tile in tilesToRender {
+            renderTileOnMouseOver(tile.x,tile.y,tile.z, tileTexture, false)
+            if isHighlighted(tile.x,tile.y,tile.z, true) {
+                highlightV3 = {tile.x,tile.y,tile.z}
             }
         }
 
-        //Render logic
-        for x in iterationMin.x..= iterationMax.x {
-            for y in iterationMin.y..= iterationMax.y {
-                for z in iterationMin.z..= iterationMax.z {
-                    if rl.IsMouseButtonPressed(rl.MouseButton.LEFT){
-                        append(&deletedTiles, highlightV3)
-                        // fmt.println(highlightV3)
-                    }
-                    shouldHighlight := x == highlightV3.x && y == highlightV3.y && z == highlightV3.z
-                    if !slice.contains(deletedTiles[:], v3({x,y,z})){
-                        renderTileOnMouseOver(x,y,z, tileTexture, shouldHighlight)
-                    }
-                }
+        for tile,index in tilesToRender {
+            renderTileOnMouseOver(tile.x,tile.y,tile.z, tileTexture, tile == highlightV3)
+        }
+
+        //Done post render so that it won't mess with render
+        for tile,index in tilesToRender {
+            if rl.IsMouseButtonPressed(rl.MouseButton.LEFT) && tile == highlightV3{
+                fmt.println(index)
+                ordered_remove(&tilesToRender, index)
             }
         }
 
         if rl.IsKeyPressed(rl.KeyboardKey.R) {
-            delete(deletedTiles)
-            deletedTiles = make([dynamic]v3)
+            delete(tilesToRender)
+            tilesToRender = prepareTiles(iterationMin,iterationMax)
         }
 
         rl.EndDrawing()
     }
+}
+
+prepareTiles :: proc (iterationMin,iterationMax:v3) -> [dynamic]v3 {
+    arr :[dynamic]v3
+    for x in iterationMin.x..= iterationMax.x {
+        for y in iterationMin.y..= iterationMax.y {
+            for z in iterationMin.z..= iterationMax.z {
+                tile:v3 = {x,y,z}
+                append(&arr, tile)
+            }
+        }
+    }
+    return arr
 }
 
 renderTileOnMouseOver :: proc(x,y,z:int, tileTexture:rl.Texture, shouldRenderHighlighted:bool = false) {
