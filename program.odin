@@ -36,6 +36,11 @@ editMode :: enum {
     DELETE
 }
 
+tileInfo :: struct {
+    pos: v3,
+    nrOfTile:int
+}
+
 tileSize:v2 = {64,32}
 levelHeight := 16
 windowSize:v2 = {1024,860}
@@ -55,6 +60,7 @@ initGameLoop :: proc() {
     defer rl.CloseWindow()
     tileTexture: rl.Texture2D = rl.LoadTexture("./shortTiles.png")
     eMode := editMode.CREATE
+    tileType := 1
 
 
     ticks:i32= 0
@@ -67,7 +73,7 @@ initGameLoop :: proc() {
     // alot of tiles
     // iterationMin:v3 = {0, 0, 0}
     // iterationMax:v3  = {40, 40, 1}
-    tilesToRender:[dynamic]v3 = prepareTiles(iterationMin,iterationMax)
+    tilesToRender:[dynamic]tileInfo = prepareTiles(iterationMin,iterationMax)
     fmt.println(len(tilesToRender))
 
     editSelectV3: v3
@@ -89,9 +95,9 @@ initGameLoop :: proc() {
         tileSide: side
         for tile in tilesToRender {
             // renderTileOnMouseOver(tile.x,tile.y,tile.z, tileTexture, false)
-            isHigh, tempTileSide := isHighlighted(tile.x,tile.y,tile.z, true)
+            isHigh, tempTileSide := isHighlighted(tile.pos.x,tile.pos.y,tile.pos.z, true)
             if  isHigh {
-                highlightV3 = {tile.x,tile.y,tile.z}
+                highlightV3 = {tile.pos.x,tile.pos.y,tile.pos.z}
                 tileSide = tempTileSide
             }
         }
@@ -113,17 +119,17 @@ initGameLoop :: proc() {
         defer rl.DrawText(tileAmountText, 20,100, 16, {0,0,0,255})
 
         for tile,index in tilesToRender {
-            renderTileOnMouseOver(tile.x,tile.y,tile.z, tileTexture, tile == highlightV3)
+            renderTileOnMouseOver(tile, tileTexture, tile.pos == highlightV3)
         }
 
         //Done post render so that it won't mess with render
         tileToAdd:v3 = nullV3
         for tile,index in tilesToRender {
-            if rl.IsMouseButtonPressed(rl.MouseButton.LEFT) && tile == highlightV3{
+            if rl.IsMouseButtonPressed(rl.MouseButton.LEFT) && tile.pos == highlightV3{
                 switch eMode {
                 case editMode.SELECT:
                     fmt.println("select lmb")
-                    editSelectV3 = tile
+                    editSelectV3 = tile.pos
                 case editMode.CREATE:
                     fmt.println("create lmb")
                     tileToAdd = highlightV3
@@ -140,7 +146,7 @@ initGameLoop :: proc() {
 
         if tileToAdd != nullV3 {
             // append(&tilesToRender, tileToAdd)
-            createTile(&tilesToRender, tileToAdd, tileSide)
+            createTile(&tilesToRender, tileToAdd, tileSide, tileType)
         }
 
         if rl.IsKeyPressed(rl.KeyboardKey.R) {
@@ -156,43 +162,56 @@ initGameLoop :: proc() {
         if rl.IsKeyPressed(rl.KeyboardKey.E) {
             eMode = editMode.DELETE
         }
+        if rl.IsKeyPressed(rl.KeyboardKey.ONE) {
+            tileType = 1
+        }
+        if rl.IsKeyPressed(rl.KeyboardKey.TWO) {
+            tileType = 2
+        }
+        if rl.IsKeyPressed(rl.KeyboardKey.THREE) {
+            tileType = 3
+        }
+        if rl.IsKeyPressed(rl.KeyboardKey.FOUR) {
+            fmt.println("4")
+            tileType = 4
+        }
 
         rl.EndDrawing()
     }
 }
 
-createTile :: proc (tiles:^[dynamic]v3, placement:v3, tileSide:side) {
+createTile :: proc (tiles:^[dynamic]tileInfo, placement:v3, tileSide:side, type: int = 1) {
     //For now I treat 0,0,0 as null value
     if(placement == nullV3){
         return
     }
-    newTilePlacement := placement
+    newTilePlacement :tileInfo= {placement,type}
     switch tileSide{
     case side.TOP:
-        newTilePlacement.z += 1
+        newTilePlacement.pos.z += 1
     case side.LEFT:
-        newTilePlacement.y += 1
+        newTilePlacement.pos.y += 1
     case side.RIGHT:
-        newTilePlacement.x += 1
+        newTilePlacement.pos.x += 1
     }
 
     append(tiles, newTilePlacement)
     slice.sort_by(tiles[:], orderByZ)
 }
 
-orderByZ :: proc (a,b:v3) -> bool {
-    if a.z != b.z {
-        return a.z < b.z
+orderByZ :: proc (a,b:tileInfo) -> bool {
+    if a.pos.z != b.pos.z {
+        return a.pos.z < b.pos.z
     }
-    return a.x + a.y < b.x + b.y
+    return a.pos.x + a.pos.y < b.pos.x + b.pos.y
 }
 
-prepareTiles :: proc (iterationMin,iterationMax:v3) -> [dynamic]v3 {
-    arr :[dynamic]v3
+prepareTiles :: proc (iterationMin,iterationMax:v3) -> [dynamic]tileInfo {
+    arr :[dynamic]tileInfo
     for x in iterationMin.x..= iterationMax.x {
         for y in iterationMin.y..= iterationMax.y {
             for z in iterationMin.z..= iterationMax.z {
-                tile:v3 = {x,y,z}
+                tile:tileInfo = {{x,y,z},1}
                 append(&arr, tile)
             }
         }
@@ -200,9 +219,9 @@ prepareTiles :: proc (iterationMin,iterationMax:v3) -> [dynamic]v3 {
     return arr
 }
 
-renderTileOnMouseOver :: proc(x,y,z:int, tileTexture:rl.Texture, shouldRenderHighlighted:bool = false) {
-    tilePos := projectToIso(x,y,z)
-    renderTile(tilePos, tileTexture, shouldRenderHighlighted)
+renderTileOnMouseOver :: proc(ti:tileInfo, tileTexture:rl.Texture, shouldRenderHighlighted:bool = false) {
+    tilePos := projectToIso(ti.pos.x,ti.pos.y,ti.pos.z)
+    renderTile(tilePos, tileTexture, shouldRenderHighlighted, ti.nrOfTile)
 }
 
 isHighlighted :: proc(x,y,z: int, considerLevelHeight: bool) -> (bool, side)  {
@@ -229,12 +248,16 @@ isInRect :: proc(point:v2, a,b,width,height:int) -> bool {
         point.y > b && point.y < b + height
 }
 
-renderTile :: proc(pos:v2, tileTexture:rl.Texture, highlighted:bool, nrOfTile: int = 1) {
+renderTile :: proc(pos:v2, tileTexture:rl.Texture, highlighted:bool, nrOfTile: int = 1, renderWithGrid:bool = true) {
     tilePngPlacement:v2 = {tileSize.x * nrOfTile, (tileSize.y + levelHeight) * nrOfTile}
     imageRectangle:rl.Rectangle = {f32(tilePngPlacement.x),f32(tilePngPlacement.y), f32(tileSize.x), f32(tileSize.y + levelHeight)}
     color:rl.Color = highlighted ? rl.SKYBLUE : rl.WHITE
     // color:rl.Color = highlighted ? rl.SKYBLUE : {255,255,255,20}
     rl.DrawTextureRec(tileTexture, imageRectangle, {f32(pos.x), f32(pos.y)}, color)
+    if renderWithGrid {
+        gridRectangle:rl.Rectangle = {0,0, f32(tileSize.x), f32(tileSize.y + levelHeight)}
+        rl.DrawTextureRec(tileTexture, gridRectangle, {f32(pos.x), f32(pos.y)}, color)
+    }
 }
 
 projectToIso :: proc(isoX,isoY,isoZ: int) -> v2 {
