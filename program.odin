@@ -73,6 +73,10 @@ initGameLoop :: proc() {
     // alot of tiles
     // iterationMin:v3 = {0, 0, 0}
     // iterationMax:v3  = {40, 40, 1}
+
+    useRenderLevel := false
+    renderLevel := iterationMin.z
+
     tilesToRender:[dynamic]tileInfo = prepareTiles(iterationMin,iterationMax)
     fmt.println(len(tilesToRender))
 
@@ -94,6 +98,9 @@ initGameLoop :: proc() {
 
         tileSide: side
         for tile in tilesToRender {
+            if tile.pos.z > renderLevel && useRenderLevel {
+                continue;
+            }
             // renderTileOnMouseOver(tile.x,tile.y,tile.z, tileTexture, false)
             isHigh, tempTileSide := isHighlighted(tile.pos.x,tile.pos.y,tile.pos.z, true)
             if  isHigh {
@@ -118,7 +125,13 @@ initGameLoop :: proc() {
         tileAmountText:cstring = fmt.ctprintf("tiles: %v", len(tilesToRender))
         defer rl.DrawText(tileAmountText, 20,100, 16, {0,0,0,255})
 
+        renderLevelText:cstring = fmt.ctprintf("render level: %v, %v lv", useRenderLevel, renderLevel)
+        defer rl.DrawText(renderLevelText, 20,120, 16, {0,0,0,255})
+
         for tile,index in tilesToRender {
+            if tile.pos.z > renderLevel && useRenderLevel {
+                continue;
+            }
             renderTileOnMouseOver(tile, tileTexture, tile.pos == highlightV3)
         }
 
@@ -172,8 +185,20 @@ initGameLoop :: proc() {
             tileType = 3
         }
         if rl.IsKeyPressed(rl.KeyboardKey.FOUR) {
-            fmt.println("4")
             tileType = 4
+        }
+        if rl.IsKeyPressed(rl.KeyboardKey.S) {
+            if(useRenderLevel) {
+                useRenderLevel = false
+            }else {
+                useRenderLevel = true
+            }
+        }
+        if rl.IsKeyPressed(rl.KeyboardKey.D) {
+            renderLevel -= 1
+        }
+        if rl.IsKeyPressed(rl.KeyboardKey.F) {
+            renderLevel += 1
         }
 
         rl.EndDrawing()
