@@ -9,6 +9,7 @@ Hopefully I'll have a tutorial attached to this particular application so that a
 * Features
 ** Isometric tiling
 By clicking add/remove/edit tiles that are at the coordinate of the mouse
+\\
 [[./shortTile.png]]
 ** Floor filtering
 Being able to choose at which height we are currently editing
