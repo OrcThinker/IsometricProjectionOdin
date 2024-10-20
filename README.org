@@ -26,3 +26,7 @@ This would require creating additional textures, so kinda don't feel like it
 By using WSAD / arrows move around the map
 ** Zooming in/out
 Using scroll / +/- zoom the view in and out
+
+#+CAPTION: Capt
+#+NAME: TestImage
+[[./shortTile.png]]
